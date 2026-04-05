@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anh Nhớ Em Rồi</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Noto+Serif+SC:wght@400;600&display=swap');
+
+body {
+    font-family: 'Noto Serif SC', system-ui, sans-serif;
+}
+
+.title-font {
+    font-family: 'Playfair Display', serif;
+}
+
+.chapter:hover {
+    transform: translateX(8px);
+}
+
+.content {
+    font-size: 1.15rem;
+    line-height: 1.85;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* Sidebar */
+.sidebar {
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        transform: translateX(0) !important;
+        position: relative !important;
+    }
+}
+
+/* Overlay */
+#overlay {
+    display: none;
+}
+
+#overlay.show {
+    display: block;
+}
+
+/* Progress */
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(to right, #ff4d4d, #ff8c8c);
+    z-index: 50;
+    width: 0;
+}
+</style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-200 min-h-screen flex">
+
+<!-- Progress -->
+<div id="progress" class="scroll-progress"></div>
+
+<!-- Overlay -->
+<div id="overlay" class="fixed inset-0 bg-black/50 z-40"></div>
+
+<!-- Sidebar -->
+<div id="sidebar" class="sidebar w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col h-screen overflow-hidden fixed lg:relative z-50 transition-transform duration-300">
+
+    <div class="p-6 border-b border-zinc-800 flex items-center gap-3">
+        <i class="fa-solid fa-book-open text-3xl text-rose-500"></i>
+        <h1 class="title-font text-2xl font-bold text-white">Anh Nhớ Em Rồi</h1>
+    </div>
+
+    <div id="chapterList" class="flex-1 overflow-y-auto px-3 py-2 space-y-1"></div>
+
+    <div class="p-4 border-t border-zinc-800 text-center text-sm text-zinc-500">
+        Tổng <span id="totalChapters" class="text-rose-400">0</span> chương
+    </div>
+</div>
+
+<!-- Main -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden">
+
+    <!-- Top -->
+    <div class="h-14 border-b border-zinc-800 bg-zinc-900 flex items-center px-6 justify-between">
+
+        <button onclick="toggleSidebar()" class="lg:hidden text-xl">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div id="currentTitle" class="text-lg">Chọn chương</div>
+
+        <div></div>
+    </div>
+
+    <!-- Content -->
+    <div id="readingArea" class="flex-1 overflow-y-auto p-6">
+
+        <div id="title" class="text-3xl text-center mb-8 text-rose-400"></div>
+        <div id="content" class="content"></div>
+
+    </div>
+
+    <!-- Bottom -->
+    <div class="h-14 border-t border-zinc-800 flex items-center justify-between px-6">
+
+        <button onclick="prevChapter()">← Trước</button>
+        <div id="chapterInfo"></div>
+        <button onclick="nextChapter()">Sau →</button>
+
+    </div>
+
+</div>
+
+<script>
+let chapters = [];
+let currentIndex = -1;
+
+// Load chapters
+fetch("chapters.json")
+.then(res => res.json())
+.then(data => {
+    chapters = data;
+    document.getElementById("totalChapters").innerText = data.length;
+
+    const list = document.getElementById("chapterList");
+
+    data.forEach((file, index) => {
+        const div = document.createElement("div");
+        div.className = "chapter px-4 py-3 cursor-pointer hover:bg-zinc-800 rounded-xl";
+        div.innerText = file.replace(".txt", "");
+        div.onclick = () => loadChapter(file, index, div);
+        list.appendChild(div);
+    });
+});
+
+// Load chapter
+function loadChapter(file, index, el) {
+    fetch(file)
+    .then(res => res.text())
+    .then(data => {
+        document.getElementById("title").innerText = file.replace(".txt", "");
+        document.getElementById("currentTitle").innerText = file.replace(".txt", "");
+        document.getElementById("content").innerText = data;
+
+        document.querySelectorAll(".chapter").forEach(c => c.classList.remove("bg-rose-900"));
+        el.classList.add("bg-rose-900");
+
+        currentIndex = index;
+        document.getElementById("chapterInfo").innerText = `${index+1}/${chapters.length}`;
+
+        document.getElementById("readingArea").scrollTop = 0;
+
+        closeSidebar();
+    });
+}
+
+// Sidebar
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("overlay").classList.toggle("show");
+}
+
+function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("overlay").classList.remove("show");
+}
+
+document.getElementById("overlay").onclick = closeSidebar;
+
+// Next Prev
+function prevChapter() {
+    if (currentIndex > 0)
+        document.querySelectorAll(".chapter")[currentIndex - 1].click();
+}
+
+function nextChapter() {
+    if (currentIndex < chapters.length - 1)
+        document.querySelectorAll(".chapter")[currentIndex + 1].click();
+}
+
+// Scroll progress
+const readingArea = document.getElementById("readingArea");
+
+readingArea.addEventListener("scroll", () => {
+    const scrollTop = readingArea.scrollTop;
+    const scrollHeight = readingArea.scrollHeight - readingArea.clientHeight;
+    const progress = (scrollTop / scrollHeight) * 100;
+    document.getElementById("progress").style.width = progress + "%";
+});
+</script>
+
+</body>
+</html>
