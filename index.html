@@ -9,31 +9,34 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Noto+Serif+SC:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Merriweather:wght@300;400;700&display=swap');
 
 body {
-    font-family: 'Noto Serif SC', system-ui, sans-serif;
+    font-family: 'Merriweather', serif;
 }
 
+/* Tiêu đề */
 .title-font {
     font-family: 'Playfair Display', serif;
 }
 
-.chapter:hover {
-    transform: translateX(8px);
-}
-
+/* Nội dung truyện */
 .content {
-    font-size: 1.15rem;
-    line-height: 1.85;
+    font-size: 1.2rem;
+    line-height: 2;
     max-width: 720px;
     margin: 0 auto;
+    color: #d4d4d8;
+}
+
+/* Thụt đầu dòng như sách */
+.content p {
+    text-indent: 2em;
+    margin-bottom: 1.2em;
 }
 
 /* Sidebar */
 .sidebar {
-    left: 0;
-    top: 0;
     transform: translateX(-100%);
 }
 
@@ -72,18 +75,16 @@ body {
 
 <body class="bg-zinc-950 text-zinc-200 min-h-screen flex">
 
-<!-- Progress -->
 <div id="progress" class="scroll-progress"></div>
 
-<!-- Overlay -->
 <div id="overlay" class="fixed inset-0 bg-black/50 z-40"></div>
 
 <!-- Sidebar -->
-<div id="sidebar" class="sidebar w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col h-screen overflow-hidden fixed lg:relative z-50 transition-transform duration-300">
+<div id="sidebar" class="sidebar w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col h-screen fixed lg:relative z-50 transition-transform duration-300">
 
     <div class="p-6 border-b border-zinc-800 flex items-center gap-3">
         <i class="fa-solid fa-book-open text-3xl text-rose-500"></i>
-        <h1 class="title-font text-2xl font-bold text-white">Anh Nhớ Em Rồi</h1>
+        <h1 class="title-font text-2xl text-white">Anh Nhớ Em Rồi</h1>
     </div>
 
     <div id="chapterList" class="flex-1 overflow-y-auto px-3 py-2 space-y-1"></div>
@@ -94,35 +95,30 @@ body {
 </div>
 
 <!-- Main -->
-<div class="flex-1 flex flex-col h-screen overflow-hidden">
+<div class="flex-1 flex flex-col h-screen">
 
-    <!-- Top -->
     <div class="h-14 border-b border-zinc-800 bg-zinc-900 flex items-center px-6 justify-between">
-
         <button onclick="toggleSidebar()" class="lg:hidden text-xl">
             <i class="fa-solid fa-bars"></i>
         </button>
 
-        <div id="currentTitle" class="text-lg">Chọn chương</div>
+        <div id="currentTitle" class="text-lg text-zinc-300"></div>
 
-        <button onclick="resumeReading()" class="text-sm bg-rose-500 px-3 py-1 rounded-lg">Đọc tiếp</button>
+        <div></div>
     </div>
 
-    <!-- Content -->
-    <div id="readingArea" class="flex-1 overflow-y-auto p-6">
+    <div id="readingArea" class="flex-1 overflow-y-auto p-8">
 
-        <div id="title" class="text-3xl text-center mb-8 text-rose-400"></div>
+        <div id="title" class="title-font text-4xl text-center mb-10 text-rose-300"></div>
+
         <div id="content" class="content"></div>
 
     </div>
 
-    <!-- Bottom -->
     <div class="h-14 border-t border-zinc-800 flex items-center justify-between px-6">
-
         <button onclick="prevChapter()">← Trước</button>
         <div id="chapterInfo"></div>
         <button onclick="nextChapter()">Sau →</button>
-
     </div>
 
 </div>
@@ -148,7 +144,6 @@ fetch("chapters.json")
         list.appendChild(div);
     });
 
-    // Auto resume khi vào web
     const saved = localStorage.getItem("lastChapter");
     if (saved !== null) {
         setTimeout(() => {
@@ -162,9 +157,13 @@ function loadChapter(file, index, el) {
     fetch(file)
     .then(res => res.text())
     .then(data => {
+
+        // Tách đoạn (xuống dòng thành <p>)
+        const paragraphs = data.split("\n").map(p => `<p>${p}</p>`).join("");
+
         document.getElementById("title").innerText = file.replace(".txt", "");
         document.getElementById("currentTitle").innerText = file.replace(".txt", "");
-        document.getElementById("content").innerText = data;
+        document.getElementById("content").innerHTML = paragraphs;
 
         document.querySelectorAll(".chapter").forEach(c => c.classList.remove("bg-rose-900"));
         el.classList.add("bg-rose-900");
@@ -174,10 +173,8 @@ function loadChapter(file, index, el) {
 
         document.getElementById("readingArea").scrollTop = 0;
 
-        // 💾 Lưu chương
         localStorage.setItem("lastChapter", index);
 
-        // ⏳ Restore scroll
         setTimeout(() => {
             const savedScroll = localStorage.getItem("scrollPos");
             if (savedScroll) {
@@ -189,7 +186,7 @@ function loadChapter(file, index, el) {
     });
 }
 
-// Lưu scroll
+// Scroll + save
 const readingArea = document.getElementById("readingArea");
 
 readingArea.addEventListener("scroll", () => {
@@ -201,14 +198,6 @@ readingArea.addEventListener("scroll", () => {
 
     localStorage.setItem("scrollPos", scrollTop);
 });
-
-// Resume button
-function resumeReading() {
-    const saved = localStorage.getItem("lastChapter");
-    if (saved !== null) {
-        document.querySelectorAll(".chapter")[saved]?.click();
-    }
-}
 
 // Sidebar
 function toggleSidebar() {
