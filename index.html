@@ -105,7 +105,7 @@ body {
 
         <div id="currentTitle" class="text-lg">Chọn chương</div>
 
-        <div></div>
+        <button onclick="resumeReading()" class="text-sm bg-rose-500 px-3 py-1 rounded-lg">Đọc tiếp</button>
     </div>
 
     <!-- Content -->
@@ -147,6 +147,14 @@ fetch("chapters.json")
         div.onclick = () => loadChapter(file, index, div);
         list.appendChild(div);
     });
+
+    // Auto resume khi vào web
+    const saved = localStorage.getItem("lastChapter");
+    if (saved !== null) {
+        setTimeout(() => {
+            document.querySelectorAll(".chapter")[saved]?.click();
+        }, 300);
+    }
 });
 
 // Load chapter
@@ -166,8 +174,40 @@ function loadChapter(file, index, el) {
 
         document.getElementById("readingArea").scrollTop = 0;
 
+        // 💾 Lưu chương
+        localStorage.setItem("lastChapter", index);
+
+        // ⏳ Restore scroll
+        setTimeout(() => {
+            const savedScroll = localStorage.getItem("scrollPos");
+            if (savedScroll) {
+                document.getElementById("readingArea").scrollTop = savedScroll;
+            }
+        }, 100);
+
         closeSidebar();
     });
+}
+
+// Lưu scroll
+const readingArea = document.getElementById("readingArea");
+
+readingArea.addEventListener("scroll", () => {
+    const scrollTop = readingArea.scrollTop;
+    const scrollHeight = readingArea.scrollHeight - readingArea.clientHeight;
+    const progress = (scrollTop / scrollHeight) * 100;
+
+    document.getElementById("progress").style.width = progress + "%";
+
+    localStorage.setItem("scrollPos", scrollTop);
+});
+
+// Resume button
+function resumeReading() {
+    const saved = localStorage.getItem("lastChapter");
+    if (saved !== null) {
+        document.querySelectorAll(".chapter")[saved]?.click();
+    }
 }
 
 // Sidebar
@@ -193,16 +233,6 @@ function nextChapter() {
     if (currentIndex < chapters.length - 1)
         document.querySelectorAll(".chapter")[currentIndex + 1].click();
 }
-
-// Scroll progress
-const readingArea = document.getElementById("readingArea");
-
-readingArea.addEventListener("scroll", () => {
-    const scrollTop = readingArea.scrollTop;
-    const scrollHeight = readingArea.scrollHeight - readingArea.clientHeight;
-    const progress = (scrollTop / scrollHeight) * 100;
-    document.getElementById("progress").style.width = progress + "%";
-});
 </script>
 
 </body>
