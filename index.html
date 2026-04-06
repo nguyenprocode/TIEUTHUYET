@@ -15,12 +15,10 @@ body {
     font-family: 'Merriweather', serif;
 }
 
-/* Tiêu đề */
 .title-font {
     font-family: 'Playfair Display', serif;
 }
 
-/* Nội dung truyện */
 .content {
     font-size: 19px;
     line-height: 2.05;
@@ -28,20 +26,24 @@ body {
     margin: 0 auto;
     color: #d6d3d1;
     letter-spacing: 0.3px;
-    text-align: left; /* ✅ CĂN TRÁI */
+    text-align: left;
     padding: 0 10px;
 }
 
-/* Đoạn văn */
 .content p {
     text-indent: 2em;
     margin-bottom: 16px;
 }
 
-/* Đoạn ngắn */
 .content p.short {
     text-indent: 0;
     text-align: center;
+}
+
+/* Nút đọc */
+#readBtn.reading {
+    background: #ff4d4d;
+    box-shadow: 0 0 12px rgba(255,77,77,0.8);
 }
 
 /* Sidebar */
@@ -59,7 +61,6 @@ body {
     }
 }
 
-/* Overlay */
 #overlay {
     display: none;
 }
@@ -67,7 +68,6 @@ body {
     display: block;
 }
 
-/* Progress */
 .scroll-progress {
     position: fixed;
     top: 0;
@@ -110,7 +110,11 @@ body {
 
         <div id="currentTitle" class="text-lg text-zinc-300"></div>
 
-        <div></div>
+        <!-- 🔊 NÚT ĐỌC -->
+        <button onclick="toggleRead()" id="readBtn"
+            class="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded-xl text-lg">
+            🔊
+        </button>
     </div>
 
     <div id="readingArea" class="flex-1 overflow-y-auto px-6 py-10">
@@ -191,18 +195,56 @@ function loadChapter(file, index, el) {
 
         localStorage.setItem("lastChapter", index);
 
-        setTimeout(() => {
-            const savedScroll = localStorage.getItem("scrollPos");
-            if (savedScroll) {
-                document.getElementById("readingArea").scrollTop = savedScroll;
-            }
-        }, 100);
+        speechSynthesis.cancel(); // dừng đọc khi đổi chương
 
         closeSidebar();
     });
 }
 
-// Scroll
+// 🔊 TEXT TO SPEECH
+let isReading = false;
+let utterance = null;
+
+function toggleRead() {
+    const btn = document.getElementById("readBtn");
+
+    if (isReading) {
+        speechSynthesis.cancel();
+        isReading = false;
+        btn.classList.remove("reading");
+        btn.innerHTML = "🔊";
+        return;
+    }
+
+    const text = document.getElementById("content").innerText;
+
+    utterance = new SpeechSynthesisUtterance(text);
+
+    const voices = speechSynthesis.getVoices();
+    const viVoice = voices.find(v => v.lang.includes("vi"));
+
+    if (viVoice) utterance.voice = viVoice;
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    speechSynthesis.speak(utterance);
+
+    isReading = true;
+    btn.classList.add("reading");
+    btn.innerHTML = "⏸";
+
+    utterance.onend = () => {
+        isReading = false;
+        btn.classList.remove("reading");
+        btn.innerHTML = "🔊";
+    };
+}
+
+// fix load voice
+speechSynthesis.onvoiceschanged = () => {};
+
+// Scroll progress
 const readingArea = document.getElementById("readingArea");
 
 readingArea.addEventListener("scroll", () => {
