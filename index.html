@@ -20,7 +20,7 @@ body {
     font-family: 'Playfair Display', serif;
 }
 
-/* Nội dung truyện chuẩn tiểu thuyết */
+/* Nội dung truyện */
 .content {
     font-size: 19px;
     line-height: 2.05;
@@ -28,10 +28,8 @@ body {
     margin: 0 auto;
     color: #d6d3d1;
     letter-spacing: 0.3px;
-    text-align: justify;
+    text-align: left; /* ✅ CĂN TRÁI */
     padding: 0 10px;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
 }
 
 /* Đoạn văn */
@@ -40,7 +38,7 @@ body {
     margin-bottom: 16px;
 }
 
-/* Đoạn ngắn căn giữa (cực đẹp) */
+/* Đoạn ngắn */
 .content p.short {
     text-indent: 0;
     text-align: center;
@@ -85,7 +83,6 @@ body {
 <body class="bg-[#0f0f0f] text-zinc-300 min-h-screen flex">
 
 <div id="progress" class="scroll-progress"></div>
-
 <div id="overlay" class="fixed inset-0 bg-black/50 z-40"></div>
 
 <!-- Sidebar -->
@@ -136,7 +133,6 @@ body {
 let chapters = [];
 let currentIndex = -1;
 
-// Load chapters
 fetch("chapters.json")
 .then(res => res.json())
 .then(data => {
@@ -153,7 +149,6 @@ fetch("chapters.json")
         list.appendChild(div);
     });
 
-    // Auto resume
     const saved = localStorage.getItem("lastChapter");
     if (saved !== null) {
         setTimeout(() => {
@@ -162,7 +157,6 @@ fetch("chapters.json")
     }
 });
 
-// Load chapter
 function loadChapter(file, index, el) {
     fetch(file)
     .then(res => res.text())
@@ -170,14 +164,12 @@ function loadChapter(file, index, el) {
 
         const content = document.getElementById("content");
 
-        // Xử lý đoạn văn thông minh
         content.innerHTML = data
             .split("\n")
             .map(line => {
                 line = line.trim();
                 if (!line) return "";
 
-                // đoạn ngắn thì center
                 if (line.length < 40) {
                     return `<p class="short">${line}</p>`;
                 }
