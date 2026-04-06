@@ -20,26 +20,36 @@ body {
     font-family: 'Playfair Display', serif;
 }
 
-/* Nội dung truyện */
+/* Nội dung truyện chuẩn tiểu thuyết */
 .content {
-    font-size: 1.2rem;
-    line-height: 2;
-    max-width: 720px;
+    font-size: 19px;
+    line-height: 2.05;
+    max-width: 640px;
     margin: 0 auto;
-    color: #d4d4d8;
+    color: #d6d3d1;
+    letter-spacing: 0.3px;
+    text-align: justify;
+    padding: 0 10px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Thụt đầu dòng như sách */
+/* Đoạn văn */
 .content p {
     text-indent: 2em;
-    margin-bottom: 1.2em;
+    margin-bottom: 16px;
+}
+
+/* Đoạn ngắn căn giữa (cực đẹp) */
+.content p.short {
+    text-indent: 0;
+    text-align: center;
 }
 
 /* Sidebar */
 .sidebar {
     transform: translateX(-100%);
 }
-
 .sidebar.open {
     transform: translateX(0);
 }
@@ -55,7 +65,6 @@ body {
 #overlay {
     display: none;
 }
-
 #overlay.show {
     display: block;
 }
@@ -73,7 +82,7 @@ body {
 </style>
 </head>
 
-<body class="bg-zinc-950 text-zinc-200 min-h-screen flex">
+<body class="bg-[#0f0f0f] text-zinc-300 min-h-screen flex">
 
 <div id="progress" class="scroll-progress"></div>
 
@@ -107,7 +116,7 @@ body {
         <div></div>
     </div>
 
-    <div id="readingArea" class="flex-1 overflow-y-auto p-8">
+    <div id="readingArea" class="flex-1 overflow-y-auto px-6 py-10">
 
         <div id="title" class="title-font text-4xl text-center mb-10 text-rose-300"></div>
 
@@ -144,6 +153,7 @@ fetch("chapters.json")
         list.appendChild(div);
     });
 
+    // Auto resume
     const saved = localStorage.getItem("lastChapter");
     if (saved !== null) {
         setTimeout(() => {
@@ -158,12 +168,26 @@ function loadChapter(file, index, el) {
     .then(res => res.text())
     .then(data => {
 
-        // Tách đoạn (xuống dòng thành <p>)
-        const paragraphs = data.split("\n").map(p => `<p>${p}</p>`).join("");
+        const content = document.getElementById("content");
+
+        // Xử lý đoạn văn thông minh
+        content.innerHTML = data
+            .split("\n")
+            .map(line => {
+                line = line.trim();
+                if (!line) return "";
+
+                // đoạn ngắn thì center
+                if (line.length < 40) {
+                    return `<p class="short">${line}</p>`;
+                }
+
+                return `<p>${line}</p>`;
+            })
+            .join("");
 
         document.getElementById("title").innerText = file.replace(".txt", "");
         document.getElementById("currentTitle").innerText = file.replace(".txt", "");
-        document.getElementById("content").innerHTML = paragraphs;
 
         document.querySelectorAll(".chapter").forEach(c => c.classList.remove("bg-rose-900"));
         el.classList.add("bg-rose-900");
@@ -186,7 +210,7 @@ function loadChapter(file, index, el) {
     });
 }
 
-// Scroll + save
+// Scroll
 const readingArea = document.getElementById("readingArea");
 
 readingArea.addEventListener("scroll", () => {
